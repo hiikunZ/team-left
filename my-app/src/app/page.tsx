@@ -41,7 +41,7 @@ export default function Home() {
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await fetch('http://hiikunz.pythonanywhere.com/json');
+      const response = await fetch('https://hiikunz.pythonanywhere.com/json');
       if (!response.ok) {
         throw new Error('データの取得に失敗しました');
       }
