@@ -94,7 +94,7 @@ export default function Transition() {
         return formatter.format(date);
     }
 
-    let sumData = [];
+    const sumData = [];
     let sum = 0;
     for (let i = 0; i < scoreData.length; i++) {
         sum += scoreData[i].score;
