@@ -96,7 +96,7 @@ export default function Home() {
 
   // 楽しいと疲れたを分ける
   const funData = scoreData.map((item) =>
-    item.score >= 0 ? item.score : null
+    item.score > 0 ? item.score : null
   );
   const tiredData = scoreData.map((item) =>
     item.score < 0 ? Math.abs(item.score) : null
