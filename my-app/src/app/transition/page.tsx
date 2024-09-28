@@ -35,7 +35,7 @@ interface ApiResponse {
     status: string;
 }
 
-export default function Home() {
+export default function Transition() {
     const [scoreData, setScoreData] = useState<ScoreData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
