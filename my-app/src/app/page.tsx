@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation"; // ページ遷移のために useRouter を使用
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -38,6 +39,8 @@ export default function Home() {
   const [scoreData, setScoreData] = useState<ScoreData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter(); // ページ遷移用のルーター
 
   const fetchData = useCallback(async () => {
     try {
@@ -153,7 +156,15 @@ export default function Home() {
   if (error) return <div>エラー: {error}</div>;
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 relative">
+      {/* 総計を見るボタン */}
+      <button
+        onClick={() => router.push("/total")} // "/total" に遷移
+        className="absolute top-0 right-0 bg-green-500 text-white py-2 px-4 rounded-md m-4"
+      >
+        総計を見る
+      </button>
+
       <h1 className="text-2xl font-bold mb-4">
         10秒ごとに更新されるスコアデータグラフ (楽しい vs 疲れた)
       </h1>

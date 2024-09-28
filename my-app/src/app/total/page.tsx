@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation"; // ページ遷移のために useRouter を使用
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from "chart.js";
 
@@ -28,7 +29,10 @@ export default function TotalScore() {
   const [endDate, setEndDate] = useState<string>(
     new Date().toISOString().slice(0, 10)
   ); // 初期値は今日の日付
-  const [timeRange, setTimeRange] = useState<[number, number]>([0, 23]); // 時間範囲を保持（0時から23時）
+  const [startTime, setStartTime] = useState<number>(0); // 開始時間
+  const [endTime, setEndTime] = useState<number>(23); // 終了時間
+
+  const router = useRouter(); // ページ遷移用のルーター
 
   const fetchData = useCallback(async () => {
     try {
@@ -56,22 +60,37 @@ export default function TotalScore() {
     fetchData(); // 初回データ取得
   }, [fetchData]);
 
-  // 日付と時間フィルターを適用する関数
-  const applyDateFilter = () => {
+  // JSTに変換する関数
+  function formatDateToJST(dateString: string) {
+    const date = new Date(`${dateString}Z`);
+    const formatter = new Intl.DateTimeFormat("ja-JP", {
+      timeZone: "Asia/Tokyo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    return formatter.format(date);
+  }
+
+  // 日付と時間フィルターを適用する関数（スライダーや日付が変わるたびに実行）
+  useEffect(() => {
     if (startDate && endDate) {
       const filtered = scoreData.filter((item) => {
-        const createdAt = new Date(item.created_at).getTime();
+        const createdAt = new Date(formatDateToJST(item.created_at)).getTime(); // JSTに変換してから比較
         const start = new Date(
-          `${startDate}T${String(timeRange[0]).padStart(2, "0")}:00`
+          `${startDate}T${String(startTime).padStart(2, "0")}:00:00+09:00`
         ).getTime();
         const end = new Date(
-          `${endDate}T${String(timeRange[1]).padStart(2, "0")}:59`
+          `${endDate}T${String(endTime).padStart(2, "0")}:59:59+09:00`
         ).getTime();
         return createdAt >= start && createdAt <= end;
       });
       setFilteredData(filtered);
     }
-  };
+  }, [startDate, endDate, startTime, endTime, scoreData]); // 変更があるたびにフィルタリングを実行
 
   // 楽しい (正のスコア) と疲れた (負のスコアを正の数に変換して集計)
   const totalData = filteredData.reduce(
@@ -121,65 +140,69 @@ export default function TotalScore() {
   if (error) return <div>エラー: {error}</div>;
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 relative">
+      {/* リアルタイムで見るボタン */}
+      <button
+        onClick={() => router.push("/")} // "/" に遷移
+        className="absolute top-0 right-0 bg-green-500 text-white py-2 px-4 rounded-md m-4"
+      >
+        リアルタイムで見る
+      </button>
+
       <h1 className="text-2xl font-bold mb-4">楽しい vs 疲れた (総計)</h1>
 
-      {/* 日付範囲指定のUI */}
+      {/* 日付と時間の範囲指定のUI */}
       <div className="mb-4">
-        <label className="block text-lg font-semibold mb-2">開始日</label>
+        <label className="block text-lg font-semibold mb-2">日付 (開始)</label>
         <input
           type="date"
           value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
+          onChange={(e) => setStartDate(e.target.value)} // 日付が変更されたら即時フィルタリング
           className="p-2 border rounded-md"
         />
 
-        <label className="block text-lg font-semibold mt-4 mb-2">終了日</label>
+        <label className="block text-lg font-semibold mt-4 mb-2">
+          時間 (開始)
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="23"
+          value={startTime}
+          onChange={(e) => setStartTime(Number(e.target.value))} // 時間が変更されたら即時フィルタリング
+          className="w-full mb-2"
+        />
+        <div className="mt-2">
+          <span>開始時間: {startTime}時</span>
+        </div>
+
+        <label className="block text-lg font-semibold mt-4 mb-2">
+          日付 (終了)
+        </label>
         <input
           type="date"
           value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
+          onChange={(e) => setEndDate(e.target.value)} // 日付が変更されたら即時フィルタリング
           className="p-2 border rounded-md"
         />
 
-        {/* 時間範囲指定のスライダー */}
-        <div className="mt-4">
-          <label className="block text-lg font-semibold mb-2">時間範囲</label>
-          <input
-            type="range"
-            min="0"
-            max="23"
-            value={timeRange[0]}
-            onChange={(e) =>
-              setTimeRange([Number(e.target.value), timeRange[1]])
-            }
-            className="w-full mb-2"
-          />
-          <input
-            type="range"
-            min="0"
-            max="23"
-            value={timeRange[1]}
-            onChange={(e) =>
-              setTimeRange([timeRange[0], Number(e.target.value)])
-            }
-            className="w-full"
-          />
-          <div className="mt-2">
-            <span>開始時間: {timeRange[0]}時 </span>
-            <span>終了時間: {timeRange[1]}時</span>
-          </div>
+        <label className="block text-lg font-semibold mt-4 mb-2">
+          時間 (終了)
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="23"
+          value={endTime}
+          onChange={(e) => setEndTime(Number(e.target.value))} // 時間が変更されたら即時フィルタリング
+          className="w-full"
+        />
+        <div className="mt-2">
+          <span>終了時間: {endTime}時</span>
         </div>
-
-        <button
-          onClick={applyDateFilter}
-          className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-md"
-        >
-          フィルターを適用
-        </button>
       </div>
 
-      <div className="w-full h-96">
+      <div className="w-full h-96 mt-8">
         <Pie data={pieChartData} options={options} />
       </div>
       <div className="mt-8">
