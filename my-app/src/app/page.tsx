@@ -91,15 +91,31 @@ export default function Home() {
     return formatter.format(date);
   }
 
+  // 楽しいと疲れたを分ける
+  const funData = scoreData.map((item) =>
+    item.score >= 0 ? item.score : null
+  );
+  const tiredData = scoreData.map((item) =>
+    item.score < 0 ? Math.abs(item.score) : null
+  );
+
   // グラフのデータ
   const chartData = {
-    labels: scoreData.map((item) => formatDateToJST(item.created_at)), // 修正: JSTでフォーマットした日付を使う
+    labels: scoreData.map((item) => formatDateToJST(item.created_at)), // JSTでフォーマットした日付を使う
     datasets: [
       {
-        label: "スコア",
-        data: scoreData.map((item) => item.score),
-        borderColor: "rgb(75, 192, 192)",
+        label: "楽しい (プラススコア)",
+        data: funData,
+        borderColor: "rgb(255, 99, 132)", // 赤色
         tension: 0.1,
+        spanGaps: true, // null値の部分はスキップ
+      },
+      {
+        label: "疲れた (マイナススコア)",
+        data: tiredData,
+        borderColor: "rgb(75, 192, 192)", // 青色
+        tension: 0.1,
+        spanGaps: true, // null値の部分はスキップ
       },
     ],
   };
@@ -113,7 +129,7 @@ export default function Home() {
       },
       title: {
         display: true,
-        text: "アンケート結果(10秒ごとに更新)",
+        text: "楽しい vs 疲れた (10秒ごとに更新)",
       },
     },
     scales: {
@@ -139,7 +155,7 @@ export default function Home() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">
-        10秒ごとに更新されるスコアデータグラフ
+        10秒ごとに更新されるスコアデータグラフ (楽しい vs 疲れた)
       </h1>
       <div className="w-full h-96">
         <Line data={chartData} options={options} />
